@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +38,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "history unchanged"
           else
-            git commit -m "history: $(date -u +%F)"
+            git commit -m "history: $(date +%F)"
             git push
           fi
 
