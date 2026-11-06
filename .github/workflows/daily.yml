@@ -1,0 +1,61 @@
+name: daily-radar
+
+on:
+  schedule:
+    # UTC 00:00 = 北京时间 08:00
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: radar-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 生成雷达页
+        run: python radar_build.py
+
+      - name: 写回历史快照
+        run: |
+          git config user.name 'radar-bot'
+          git config user.email 'radar-bot@users.noreply.github.com'
+          git add radar_history.json
+          if git diff --cached --quiet; then
+            echo "history unchanged"
+          else
+            git commit -m "history: $(date -u +%F)"
+            git push
+          fi
+
+      - name: 组装站点
+        run: |
+          mkdir -p _site
+          cp "EVBC_挖矿雷达.html" _site/index.html
+          ls -lh _site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
