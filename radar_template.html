@@ -1,0 +1,499 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVBC 挖矿雷达 · 最佳持币区间</title>
+<style>
+  :root{
+    --bg:#080D16; --card:#101A2B; --card2:#0C1522; --line:#1E2C42;
+    --txt:#E8EEF7; --sub:#8C9AB0; --dim:#7F8EA6;
+    --acc:#5AB0F0; --acc2:#F0A05A; --ok:#4ECBA5; --warn:#F0C05A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 20% -10%, #12213A 0%, #080D16 55%) no-repeat, #080D16;
+    color:var(--txt);
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 20px 56px;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:22px}
+  .brand h1{font-size:26px;font-weight:600;letter-spacing:.5px}
+  .brand h1 span{color:var(--acc)}
+  .brand p{color:var(--sub);font-size:13px;margin-top:6px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    font-size:12px;color:var(--sub);background:var(--card2);
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap
+  }
+  .chip b{color:var(--txt);font-weight:600}
+  .chip.dot::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+    background:var(--ok);margin-right:6px;vertical-align:middle}
+
+  .hero{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
+  .card.main{background:linear-gradient(160deg,#13243C 0%,#0D1727 70%);border-color:#25405F}
+  .card h3{font-size:13px;color:var(--sub);font-weight:500;letter-spacing:1px;margin-bottom:14px}
+  .range{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .range .num{font-size:46px;font-weight:600;letter-spacing:-1px;
+    background:linear-gradient(100deg,#8FD0FA,#5AB0F0 60%,#3E8BD0);-webkit-background-clip:text;
+    background-clip:text;color:transparent;line-height:1.1}
+  .range .unit{font-size:15px;color:var(--sub)}
+  .range .tag{font-size:11px;background:rgba(90,176,240,.12);color:#8FD0FA;
+    border:1px solid rgba(90,176,240,.35);border-radius:8px;padding:3px 8px;transform:translateY(-6px)}
+  .main .desc{color:var(--sub);font-size:13px;line-height:1.9;margin-top:14px}
+  .main .desc b{color:#CFE6FA;font-weight:600}
+  .main .desc .h{color:var(--acc2);font-weight:600}
+
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:16px;overflow:hidden}
+  .only-mob{display:none}
+  .kpi{background:var(--card);padding:16px 18px}
+  .kpi .k{font-size:12px;color:var(--sub);margin-bottom:8px}
+  .kpi .v{font-size:21px;font-weight:600;letter-spacing:-.3px}
+  .kpi .s{font-size:11px;color:var(--dim);margin-top:5px}
+  .dl{font-size:11px;font-weight:600;margin-left:7px;vertical-align:2px}
+  .dl.sm{font-size:10px;margin-left:5px}
+  .dlk{font-size:10px;font-weight:400;color:#7F8EA6;margin-left:4px}
+  .dl.plus{color:#5ED08A}
+  .dl.minus{color:#E2A05A}
+  .dl.none{color:#6E7C90}
+  .lv{display:inline-block;font-size:9.5px;line-height:1.5;padding:1px 6px;border-radius:99px;margin-left:6px;background:rgba(94,208,138,.13);color:#5ED08A;font-weight:500;vertical-align:1px}
+  .lv.off{background:rgba(226,160,90,.13);color:#E2A05A}
+  .lv.cold{background:rgba(127,142,166,.13);color:#8C9AB0}
+
+  .sup{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px 22px 16px;margin-bottom:16px}
+  .sup .row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .sup .item .k{font-size:12px;color:var(--sub);margin-bottom:7px}
+  .sup .item .v{font-size:20px;font-weight:600;letter-spacing:-.3px;color:#CFE6FA}
+  .sup .item .v small{font-size:11px;color:var(--dim);font-weight:400;margin-left:3px}
+  .sup .item .v.hl{color:#8FD0FA}
+  .bar{height:5px;background:#1B2942;border-radius:99px;margin-top:16px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#3E8BD0,#8FD0FA);border-radius:99px}
+  .sup .foot{font-size:11px;color:var(--dim);margin-top:8px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .chartcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 16px 12px}
+  .chartcard h4{font-size:14px;font-weight:600;margin-bottom:2px}
+  .chartcard p{font-size:11.5px;color:var(--dim);margin-bottom:8px;line-height:1.7}
+
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px}
+  .calc .top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+  .calc h4{font-size:14px;font-weight:600}
+  .calc span.hint{font-size:11.5px;color:var(--dim)}
+  .inputs{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px}
+  input[type=number]{
+    background:var(--card2);border:1px solid #2B4462;color:var(--txt);
+    font-size:16px;font-weight:600;border-radius:10px;padding:10px 14px;width:170px;outline:none;
+    font-family:inherit
+  }
+  input[type=number]:focus{border-color:var(--acc)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chips button{
+    background:var(--card2);border:1px solid var(--line);color:var(--sub);font-size:12px;
+    border-radius:999px;padding:7px 12px;cursor:pointer;font-family:inherit;transition:.15s
+  }
+  .chips button:hover{border-color:var(--acc);color:#CFE6FA}
+  .chips button.act{background:rgba(90,176,240,.15);border-color:var(--acc);color:#CFE6FA}
+  .out{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .o{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .o .k{font-size:11.5px;color:var(--sub);margin-bottom:7px}
+  .o .v{font-size:19px;font-weight:600;color:#CFE6FA}
+  .o .v small{font-size:11px;color:var(--dim);font-weight:400;margin-left:3px}
+  .verdict{margin-top:16px;font-size:13px;line-height:1.9;color:var(--sub);
+    border-left:2px solid var(--acc);padding-left:12px}
+  .verdict b{color:var(--txt)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  th,td{text-align:right;padding:11px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--sub);font-weight:500;font-size:12px}
+  td:first-child,th:first-child{text-align:left}
+  td:nth-child(1),th:nth-child(1){width:36%}
+  td:nth-child(2),th:nth-child(2){width:32%}
+  td:nth-child(3),th:nth-child(3){width:32%}
+  th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:center}
+  td{color:#D6E3F2}
+  tr:last-child td{border-bottom:none}
+  .pay{color:var(--ok)}
+  .pay.bad{color:var(--acc2)}
+
+  .note{margin-top:18px;background:var(--card2);border:1px solid var(--line);border-radius:14px;
+    padding:16px 20px;font-size:12px;line-height:2;color:var(--dim)}
+  .note b{color:var(--sub)}
+  footer{text-align:center;color:#5E6B80;font-size:11.5px;margin-top:22px;line-height:2}
+
+  @media (max-width:700px){
+    body{padding:16px 12px 40px}
+    .brand h1{font-size:21px}
+    .brand p{font-size:12px;margin-top:5px}
+    .meta{font-size:11px}
+    .chip{font-size:11px;padding:5px 10px}
+    header{margin-bottom:16px;gap:10px}
+    .card{padding:16px 16px;border-radius:14px}
+    .card h3{margin-bottom:10px;font-size:12px}
+    .range .num{font-size:33px}
+    .range .unit{font-size:13px}
+    .range .tag{transform:none;margin-top:6px}
+    .main .desc{font-size:12.5px;line-height:1.85;margin-top:10px}
+    .kpis{grid-template-columns:1fr 1fr;border-radius:14px}
+    .kpi{padding:13px 13px}
+    .kpi .k{font-size:11px;margin-bottom:6px}
+    .kpi .v{font-size:17px}
+    .kpi .s{font-size:10px}
+    .dl{font-size:10px;margin-left:4px}
+    .dlk{font-size:9px;margin-left:3px}
+    .sup{padding:15px 16px 13px;border-radius:14px}
+    .sup .row{grid-template-columns:1fr 1fr;gap:14px 12px}
+    .sup .item .v{font-size:16px}
+    .sup .item .k{font-size:11px}
+    .sup .foot{font-size:10.5px;line-height:1.7}
+    .chartcard{padding:15px 13px 10px}
+    .chartcard h4{font-size:13.5px}
+    .chartcard p{font-size:11px}
+    .calc{padding:16px;border-radius:14px}
+    .calc .top{margin-bottom:12px}
+    .calc h4{font-size:13.5px}
+    .calc span.hint{font-size:10.5px;line-height:1.6}
+    input[type=number]{width:100%;font-size:15px;padding:10px 12px}
+    .inputs{gap:8px;margin-bottom:14px}
+    .chips button{font-size:11px;padding:6px 10px}
+    .out{grid-template-columns:1fr 1fr;gap:9px}
+    .o{padding:12px 12px}
+    .o .k{font-size:11px}
+    .o .v{font-size:17px}
+    .verdict{font-size:12px;line-height:1.8;margin-top:13px}
+    table{font-size:12px}
+    th,td{padding:9px 6px}
+    th{font-size:11px}
+    td:nth-child(1),th:nth-child(1){width:40%}
+    td:nth-child(2),th:nth-child(2){width:30%}
+    td:nth-child(3),th:nth-child(3){width:30%}
+    .note{padding:14px 15px;font-size:11px;line-height:1.9}
+    footer{font-size:10.5px;margin-top:16px}
+    .only-desk{display:none !important}
+    .only-mob{display:block !important}
+  }
+
+  @media (max-width:860px){
+    .hero,.grid2{grid-template-columns:1fr}
+    .range .num{font-size:38px}
+    .kpis{grid-template-columns:1fr 1fr}
+    table{font-size:12px}
+    th,td{padding:9px 6px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>EVBC <span>挖矿雷达</span></h1>
+      <p>按项目方公式实算的全网持币算力分布 · 找出当日最划算的持币档位</p>
+    </div>
+    <div class="meta">
+      <span class="chip dot">数据更新 <b>__UPDATED__</b>__STALE__</span>
+      <span class="chip only-desk">业务日 <b>__BUSINESS__</b></span>
+      <span class="chip"><span class="only-desk">每早 08:00 自动刷新</span><span class="only-mob">每早 8 点刷新</span></span>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="card main">
+      <h3>今日最佳持币区间</h3>
+      <div class="range">
+        <span class="num">__RANGE__</span>
+        <span class="unit">EVBC</span>
+        <span class="tag">效率峰值 __PEAK__ EVBC</span>
+      </div>
+      <div class="desc">
+        在 __RANGE__ EVBC 这一档，你的持币算力约 <b>__PEAKM__</b>，每天可拿 <b>__DINCOME__ EVBC</b>
+        （≈ <b id="husd">$__USD__</b>），折合每枚 EVBC 每日 <b>__ROI__%</b>。<br>
+        项目方页面标注的建议区间是 <b>__OFFICIAL__ EVBC</b>；但由于算力按排名计算、而非按持币数量比例，
+        <span class="h">刚好越过最拥挤档位的位置才是效率顶点</span>，这就是本页算出 __RANGE__ 的原因。
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="k">合资格地址（≥100 EVBC）</div><div class="v">__N__<span class="dl __DQUALCLS__">__DQUAL__</span><span class="dlk">__DELTALBL__</span></div><div class="s">全部持币地址 __TOTALADDR__ 个<span class="dl __DADDRCLS__ sm">__DADDR__</span></div></div>
+      <div class="kpi"><div class="k">最拥挤档位</div><div class="v">__CLUSTER__</div><div class="s">__CLUSTERC__ 个地址（__CLUSTERPC__%）持有同额</div></div>
+      <div class="kpi"><div class="k">当日持币收益池</div><div class="v">__POOL__</div><div class="s">EVBC / 天，全网按算力瓜分</div></div>
+      <div class="kpi"><div class="k">EVBC 价格<span class="lv" id="lvtag">实时</span></div><div class="v" id="lvprice">$__PRICE__</div><div class="s" id="lvsub">24h __CHANGE__</div></div>
+    </div>
+  </div>
+
+  <div class="sup">
+    <div class="row">
+      <div class="item"><div class="k">全网总量（发行上限）</div><div class="v">__CAP__<small>枚</small></div></div>
+      <div class="item"><div class="k">当前全网总数量</div><div class="v hl">__SUPPLY__<small>枚</small></div></div>
+      <div class="item"><div class="k">已发行占比</div><div class="v">__PCT__</div></div>
+      <div class="item"><div class="k">距离上限还剩</div><div class="v">__REMAIN__<small>枚</small></div></div>
+    </div>
+    <div class="bar"><i style="width:__BARW__%"></i></div>
+    <div class="foot">总量取链上 totalSupply，每早随页面一起刷新；已发行占比按「当前总量 ÷ 发行上限」计算。</div>
+  </div>
+
+  <div class="grid2">
+    <div class="chartcard">
+      <h4>收益阶梯：持币量 → 每天能拿多少</h4>
+      <p>柱子是每日持币收益（左轴），折线是每枚 EVBC 的日回报率（右轴）。注意 __JUMPS__ 这两处的断崖式跃升。</p>
+      <div class="only-desk">__SVG_COMBO__</div><div class="only-mob">__SVG_COMBO_M__</div>
+    </div>
+    <div class="chartcard">
+      <h4>全网持仓分布：人挤在哪里</h4>
+      <p>深色柱子是各区间地址数。绝大多数钱包都贴在最低门槛附近，"超过多少人"比"持有多少枚"更值钱。</p>
+      <div class="only-desk">__SVG_HIST__</div><div class="only-mob">__SVG_HIST_M__</div>
+    </div>
+  </div>
+
+  <div class="calc">
+    <div class="top">
+      <h4>算一下你自己的持仓</h4>
+      <span class="hint">纯本地计算，输入即出结果，不会上传任何数据</span>
+    </div>
+    <div class="inputs">
+      <input type="number" id="amt" step="0.01" min="0" value="__RANGE_LO__">
+      <div class="chips">
+        <button data-v="100">门槛 100</button>
+        <button data-v="__CLUSTER__">拥挤档 __CLUSTER__</button>
+        <button data-v="__CHEAPLO__">低成本 __CHEAPLO__</button>
+        <button data-v="200">官方 200</button>
+        <button data-v="__RANGE_LO__">推荐 __RANGE_LO__</button>
+        <button data-v="__RANGE_HI__">推荐上限 __RANGE_HI__</button>
+      </div>
+    </div>
+    <div class="out">
+      <div class="o"><div class="k">全网算力占比</div><div class="v" id="share">—<small>%</small></div></div>
+      <div class="o"><div class="k">持币算力 M</div><div class="v" id="power">—</div></div>
+      <div class="o"><div class="k">每日收益</div><div class="v" id="inc">—<small>EVBC</small></div></div>
+      <div class="o"><div class="k">每枚日回报率</div><div class="v" id="roi">—<small>%</small></div></div>
+      <div class="o"><div class="k">折合美元</div><div class="v" id="usd">—<small>/天</small></div></div>
+    </div>
+    <div class="verdict" id="verdict">计算中…</div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3>关键持币档位：算力与日收益</h3>
+    <p style="font-size:12px;color:var(--dim);margin:-6px 0 14px;line-height:1.8">
+      数值截至本次刷新，档位越往上，日收益的增幅越小。
+    </p>
+    <table id="tbl">
+      <thead><tr><th>持仓档位（EVBC）</th><th>算力 M</th><th>日收益 EVBC</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>口径与限制（务必先看）</b><br>
+    1. 算力规则取自项目方用户指南：<b>M = 1 + 持币量严格小于你的合资格地址数</b>，个人日收益 = 当日持币池 × M ÷ 全网算力总和。全网算力总和本页实算为 __SUMM__。<br>
+    2. 数据口径：ENI 主网 EVBC 全量持币地址（剔除交易对与 airdrop 合约），共 __TOTALADDR__ 个，其中 ≥100 EVBC 的 __N__ 个。官方按<b>快照</b>结算，本页用当前余额近似，两者可能有时点差。<br>
+    3. 收益<b>以 EVBC 计价</b>。EVBC 每天新增发行约 3.4 万枚（≈总量的 0.33%/天），所以名义回报率里有一半会被增发稀释，实际价值积累约是名义值的一半。币价本身也在波动。<br>
+    4. 官网明确写明"<b>领取合约待接入，当前不开放真实领取</b>"，本页数字是权益测算，不是可提现资产。<br>
+    5. "其他参与资格"未公开，若你不满足，算力不生效。本页只做机制计算，不构成投资建议。
+  </div>
+
+  <footer>
+    EVBC 挖矿雷达 · 数据来源：eni-radr.com 官方接口 + scan.eni.top 链上数据<br>
+    生成于 __UPDATED__　|　每次刷新会重新扫描全量持币地址并重算全部档位
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // 升序余额数组，单位 0.0001 EVBC
+  var BAL = __BAL__;
+  var SUMM = __SUMMNUM__;
+  var POOLV = __POOLNUM__;
+  var PRICEV = __PRICENUM__;
+  var HEROINC = __DINCOMENUM__;
+  var RLO = __RANGE_LO__;
+  var RHI = __RANGE_HI__;
+  var PEAK = __PEAK__;
+
+  function fmt(n, d){
+    var s = n.toFixed(d === undefined ? 2 : d);
+    var p = s.split(".");
+    p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return p.join(".");
+  }
+
+  // 二分：严格小于 X 的地址数
+  function belowCount(k){
+    var lo = 0, hi = BAL.length;
+    while (lo < hi){
+      var mid = (lo + hi) >> 1;
+      if (BAL[mid] < k) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+  }
+
+  function compute(X){
+    var k = Math.round(X * 10000);
+    var below = belowCount(k);
+    var m = 1 + below;
+    var inc = POOLV * m / SUMM;
+    return { below: below, m: m, inc: inc, roi: X > 0 ? inc / X * 100 : 0, usd: inc * PRICEV };
+  }
+
+  var amt = document.getElementById("amt");
+
+  function render(){
+    var X = parseFloat(amt.value);
+    if (!isFinite(X) || X <= 0){
+      document.getElementById("verdict").textContent = "请输入一个大于 0 的持币量。";
+      return;
+    }
+    var r = compute(X);
+    document.getElementById("share").innerHTML = fmt(r.m / SUMM * 100, 4) + "<small>%</small>";
+    document.getElementById("power").textContent = fmt(r.m, 0);
+    document.getElementById("inc").innerHTML = fmt(r.inc, 3) + "<small>EVBC</small>";
+    document.getElementById("roi").innerHTML = fmt(r.roi, 3) + "<small>%</small>";
+    document.getElementById("usd").innerHTML = "$" + fmt(r.usd, 4) + "<small>/天</small>";
+
+    var v = document.getElementById("verdict");
+    var msg = "";
+    if (X < 100){
+      msg = "<b>未达门槛</b>：低于 100 EVBC 不进入持币收益排名，算力记为 0，收益拿不到。";
+    } else if (X < RLO){
+      msg = "<b>低于推荐区间</b>：能拿到 " + fmt(r.inc, 3) + " EVBC/天，但每枚回报只有 " +
+            fmt(r.roi, 3) + "%，加仓到 " + RLO + " EVBC 可以一次性跨过大量并列钱包。";
+    } else if (X <= RHI){
+      msg = "<b>就在推荐区间内</b>：效率 " + fmt(r.roi, 3) + "%/天，接近全场最优，回本速度也最快。";
+    } else if (X <= 250){
+      msg = "<b>略高于推荐区间</b>：绝对收益更高（" + fmt(r.inc, 3) + " EVBC/天），但每枚效率已开始下滑到 " +
+            fmt(r.roi, 3) + "%，属于可接受范围。";
+    } else {
+      msg = "<b>已超出高效区间</b>：每枚只有 " + fmt(r.roi, 3) + "%/天，继续加仓的边际回本很长，性价比明显下降。";
+    }
+    v.innerHTML = msg;
+  }
+
+  amt.addEventListener("input", render);
+  var chips = document.querySelectorAll(".chips button");
+  for (var i = 0; i < chips.length; i++){
+    chips[i].addEventListener("click", function(){
+      amt.value = this.getAttribute("data-v");
+      for (var j = 0; j < chips.length; j++){ chips[j].className = ""; }
+      this.className = "act";
+      render();
+    });
+  }
+
+  // 表格
+  var rows = __TABLE__;
+  var tb = document.querySelector("#tbl tbody");
+  for (var t = 0; t < rows.length; t++){
+    var d = rows[t];
+    var tr = document.createElement("tr");
+    var xs = (d.x % 1 === 0) ? fmt(d.x, 0) : fmt(d.x, 2);
+    tr.innerHTML = "<td>" + xs + "</td><td>" + fmt(d.m, 0) +
+                   "</td><td>" + fmt(d.inc, 3) + "</td>";
+    tb.appendChild(tr);
+  }
+
+  render();
+  window.__radarRender = render;
+  window.__radarSetPrice = function(p){ PRICEV = p; };
+  window.__heroInc = HEROINC;
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  var PAIR = "0xc7182f3e2e030cf83d627be9fa3bfdb6fd04ce04";
+  var GQL  = "https://graph.eni.top/subgraphs/name/orderbook-dex";
+  var Q = "query($p:String!,$t:Int!){a:matches(first:1,orderBy:timestamp,orderDirection:desc,where:{pair:$p}){price timestamp} b:matches(first:1,orderBy:timestamp,orderDirection:asc,where:{pair:$p,timestamp_gte:$t}){price timestamp}}";
+  var tag = document.getElementById("lvtag");
+  var el  = document.getElementById("lvprice");
+  var sub = document.getElementById("lvsub");
+  if (!tag || !el || !sub || !window.fetch) return;
+
+  var timer = null, busy = false, failed = false;
+
+  function hhmmss(){
+    var d = new Date();
+    function p(n){ return n < 10 ? "0" + n : "" + n; }
+    return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  }
+  function hhmm(){
+    var d = new Date();
+    function p(n){ return n < 10 ? "0" + n : "" + n; }
+    return p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function ok(price, chg){
+    el.textContent = "$" + price.toFixed(4);
+    if (chg === null){
+      sub.innerHTML = "最新成交价 · " + hhmm() + " 更新";
+      sub.style.color = "";
+    } else {
+      var sign = chg >= 0 ? "+" : "";
+      sub.innerHTML = "24h " + sign + chg.toFixed(2) + "% · " + hhmm() + " 更新";
+      sub.style.color = chg >= 0 ? "#5ED08A" : "#E2A05A";
+    }
+    tag.className = "lv";
+    tag.textContent = "实时";
+    failed = false;
+    if (window.__radarSetPrice) window.__radarSetPrice(price);
+    var husd = document.getElementById("husd");
+    if (husd && window.__heroInc) husd.textContent = "$" + (window.__heroInc * price).toFixed(4);
+    if (window.__radarRender) window.__radarRender();
+  }
+
+  function bad(){
+    if (failed) return;
+    failed = true;
+    tag.className = "lv off";
+    tag.textContent = "离线";
+    sub.textContent = "实时连接失败 · 显示 8:00 快照价";
+    sub.style.color = "#8C9AB0";
+  }
+
+  function pull(){
+    if (busy || document.hidden) return;
+    busy = true;
+    var nowS = Math.floor(Date.now() / 1000);
+    var ctl = window.AbortController ? new AbortController() : null;
+    var to = setTimeout(function(){ if (ctl) ctl.abort(); }, 12000);
+    fetch(GQL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: Q, variables: { p: PAIR, t: nowS - 86400 } }),
+      signal: ctl ? ctl.signal : undefined
+    }).then(function(r){ return r.json(); }).then(function(j){
+      clearTimeout(to);
+      busy = false;
+      var d = j && j.data;
+      if (!d || !d.a || !d.a.length || !d.a[0].price){ bad(); return; }
+      var cur = parseInt(d.a[0].price, 10) / 1e18;
+      if (!isFinite(cur) || cur <= 0){ bad(); return; }
+      var chg = null;
+      if (d.b && d.b.length && d.b[0].price){
+        var old = parseInt(d.b[0].price, 10) / 1e18;
+        if (isFinite(old) && old > 0) chg = (cur / old - 1) * 100;
+      }
+      ok(cur, chg);
+    }).catch(function(){
+      clearTimeout(to);
+      busy = false;
+      bad();
+    });
+  }
+
+  pull();
+  timer = setInterval(pull, 30000);
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden) pull();
+  });
+})();
+</script>
+</body>
+</html>
+
+
+
+
+
