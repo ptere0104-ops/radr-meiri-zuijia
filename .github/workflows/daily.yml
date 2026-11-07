@@ -2,8 +2,11 @@ name: daily-radar
 
 on:
   schedule:
-    # UTC 00:00 = 北京时间 08:00
+    # UTC 00:00 = 北京 08:00；GitHub 定时可能延迟，后两条是兜底
     - cron: '0 0 * * *'
+    - cron: '20 0 * * *'
+    - cron: '40 1 * * *'
+
   workflow_dispatch:
 
 permissions:
